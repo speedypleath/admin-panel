@@ -1,26 +1,116 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   Design tokens — "operator console": near-black chassis, hairline rules,
+   a single desaturated teal reserved for state that matters (active nav,
+   healthy services, primary emphasis). Everything else is monochrome so the
+   numbers, not the chrome, carry the page.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-bg: #0b0c0f;
+  --color-rail: #0d0e12;
+  --color-surface: #15161b;
+  --color-surface-hi: #1a1c22;
+  --color-line: #24262d;
+  --color-line-soft: #1b1d23;
+  --color-fg: #e8e8ec;
+  --color-muted: #9a9ba3;
+  --color-faint: #6f7179;
+  --color-accent: #2dd4a7;
+  --color-accent-dim: #1d7f66;
+  --color-danger: #f87171;
+  --color-warn: #fbbf24;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-panel: 10px;
+
+  --ease-meter: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color-scheme: dark;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    /* Slightly tighter default tracking keeps dense readouts from smearing. */
+    letter-spacing: -0.01em;
+  }
+
+  /* Metrics change every 2.5s — proportional digits would jitter the layout. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "cv05" 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 30%, transparent);
+    color: var(--color-fg);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Micro caps used for section labels and table headers. */
+  .label {
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+  }
+
+  .meter-fill {
+    transition: width 600ms var(--ease-meter);
+  }
+
+  .meter-fill-v {
+    transition: height 600ms var(--ease-meter);
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-line-soft) 0%,
+      var(--color-line) 40%,
+      var(--color-line-soft) 80%
+    );
+    background-size: 300% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    background: var(--color-line-soft);
+  }
 }

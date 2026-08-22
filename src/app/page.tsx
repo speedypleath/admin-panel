@@ -1,69 +1,156 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useEffect, useState } from "react"
+
+import { ServicesTab } from "@/components/ServicesTab"
+import { Sidebar, type TabId } from "@/components/Sidebar"
+import { SystemTab } from "@/components/SystemTab"
+import { FilesTab } from "@/components/FilesTab"
+import { ServerlessTab } from "@/components/ServerlessTab"
+import { BookmarksTab } from "@/components/BookmarksTab"
+import { cx, formatAgo } from "@/components/format"
+import type { ServerlessResponse, ServicesResponse, SystemSnapshot } from "@/types"
+
+type Poll<T> = { data: T | null; error: string | null; updatedAt: number | null }
+
+/**
+ * Keeps the last good payload on screen when a poll fails, so a transient blip
+ * shows a banner instead of blanking the panel back to skeletons.
+ */
+function usePoll<T>(url: string, intervalMs: number): Poll<T> {
+  const [state, setState] = useState<Poll<T>>({ data: null, error: null, updatedAt: null })
+
+  useEffect(() => {
+    let cancelled = false
+    const controller = new AbortController()
+
+    async function tick() {
+      try {
+        const response = await fetch(url, { cache: "no-store", signal: controller.signal })
+        if (!response.ok) throw new Error(`${url} responded ${response.status}`)
+        const data = (await response.json()) as T
+        if (!cancelled) setState({ data, error: null, updatedAt: Date.now() })
+      } catch (error) {
+        if (cancelled || controller.signal.aborted) return
+        setState((previous) => ({
+          ...previous,
+          error: error instanceof Error ? error.message : "Request failed",
+        }))
+      }
+    }
+
+    void tick()
+    const timer = setInterval(() => void tick(), intervalMs)
+
+    return () => {
+      cancelled = true
+      controller.abort()
+      clearInterval(timer)
+    }
+  }, [url, intervalMs])
+
+  return state
+}
+
+function useNow(): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+  return now
+}
+
+const PAGE_META: Record<TabId, { title: string; subtitle: string }> = {
+  services: {
+    title: "Services",
+    subtitle: "Health of everything published on the tailnet.",
+  },
+  system: {
+    title: "System",
+    subtitle: "Live resource usage for this host.",
+  },
+  files: {
+    title: "Files",
+    subtitle: "Local and remote file management.",
+  },
+  serverless: {
+    title: "Serverless",
+    subtitle: "Health of hosted backends (Supabase and friends).",
+  },
+  bookmarks: {
+    title: "Bookmarks",
+    subtitle: "Handy links, grouped and one click away.",
+  },
+}
+
+export default function Page() {
+  const [tab, setTab] = useState<TabId>("services")
+  const now = useNow()
+
+  const system = usePoll<SystemSnapshot>("/api/system", 2500)
+  const services = usePoll<ServicesResponse>("/api/services", 5000)
+  const serverless = usePoll<ServerlessResponse>("/api/serverless", 15000)
+
+  const active = tab === "services" ? services : tab === "serverless" ? serverless : system
+  const meta = PAGE_META[tab]
+  const isStale = active.updatedAt !== null && now - active.updatedAt > 15_000
+  const osLabel = system.data
+    ? `${system.data.os.distro} ${system.data.os.release}`.trim()
+    : null
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex min-h-dvh">
+      <Sidebar
+        active={tab}
+        onSelect={setTab}
+        hostname={system.data?.hostname ?? null}
+        uptimeSeconds={system.data?.uptimeSeconds ?? null}
+        osLabel={osLabel}
+      />
+
+      <main className="min-w-0 flex-1">
+        <header className="border-line-soft bg-bg/85 sticky top-0 z-10 border-b px-5 py-5 backdrop-blur-sm sm:px-8">
+          <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <div className="min-w-0">
+              <h1 className="text-fg text-[22px] leading-tight font-semibold tracking-tight">
+                {meta.title}
+              </h1>
+              <p className="text-muted mt-1 text-[13px]">{meta.subtitle}</p>
+            </div>
+
+            <p
+              className="text-faint flex items-center gap-2 text-[11px]"
+              aria-live="polite"
+              aria-atomic="true"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+              <span
+                className={cx(
+                  "inline-block size-1.5 rounded-full",
+                  active.error || isStale ? "bg-warn" : "bg-accent",
+                )}
+              />
+              {active.updatedAt === null
+                ? "Connecting…"
+                : `Last updated ${formatAgo(active.updatedAt, now)}`}
+            </p>
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-[1400px] px-5 py-6 sm:px-8">
+          {tab === "services" ? (
+            <ServicesTab data={services.data} error={services.error} now={now} />
+          ) : tab === "system" ? (
+            <SystemTab snapshot={system.data} error={system.error} />
+          ) : tab === "serverless" ? (
+            <ServerlessTab data={serverless.data} error={serverless.error} now={now} />
+          ) : tab === "bookmarks" ? (
+            <BookmarksTab />
+          ) : (
+            <FilesTab />
+          )}
         </div>
       </main>
     </div>
-  );
+  )
 }

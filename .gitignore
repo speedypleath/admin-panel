@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/logs
+/data
+.openclaw
+functions/node_modules
+supabase/.temp
+build_*.sh
+
+
