@@ -43,12 +43,14 @@ function inferCategory(url: string, title: string): string {
 }
 
 serve(async (req) => {
+  const reqStart = Date.now()
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
   }
 
   if (req.method !== "POST") {
+    console.warn(`[EdgeFunction] Invalid method ${req.method} received`)
     return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,6 +60,7 @@ serve(async (req) => {
   try {
     const { url: rawUrl } = await req.json()
     if (!rawUrl) {
+      console.warn("[EdgeFunction] Missing 'url' parameter in request payload")
       return new Response(JSON.stringify({ error: "Missing 'url' in JSON body" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -68,6 +71,8 @@ serve(async (req) => {
     if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
       normalizedUrl = "https://" + normalizedUrl
     }
+
+    console.log(`[EdgeFunction] Processing metadata generation for url: ${normalizedUrl}`)
 
     let hostname = ""
     try {
@@ -124,12 +129,17 @@ serve(async (req) => {
         if (rawDesc) {
           description = cleanHtml(rawDesc).slice(0, 180)
         }
+        console.log(`[EdgeFunction] Scraped metadata for ${normalizedUrl}: title="${name}", description="${description.slice(0, 50)}..."`)
+      } else {
+        console.warn(`[EdgeFunction] Direct fetch returned status ${fetchRes.status} for ${normalizedUrl}`)
       }
-    } catch {
-      // Fall back to hostname defaults on network/fetch timeout
+    } catch (fetchErr) {
+      console.warn(`[EdgeFunction] Fetch failed/timed out for ${normalizedUrl}:`, fetchErr)
     }
 
     const category = inferCategory(normalizedUrl, name)
+    const duration = Date.now() - reqStart
+    console.log(`[EdgeFunction] Completed ${normalizedUrl} category="${category}" in ${duration}ms`)
 
     return new Response(
       JSON.stringify({
@@ -149,6 +159,7 @@ serve(async (req) => {
       }
     )
   } catch (err: any) {
+    console.error("[EdgeFunction] Unhandled error:", err)
     return new Response(
       JSON.stringify({ error: err?.message || "Internal server error" }),
       {

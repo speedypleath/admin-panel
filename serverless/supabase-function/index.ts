@@ -4,6 +4,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 serve(async (req) => {
+  const reqStart = Date.now()
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
@@ -17,12 +18,14 @@ serve(async (req) => {
   try {
     const { url } = await req.json()
     if (!url) {
+      console.warn("[EdgeFunction] Missing 'url' in request body")
       return new Response(JSON.stringify({ error: "Missing 'url' in request body" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       })
     }
 
+    console.log(`[EdgeFunction] Scraping metadata for ${url}`)
     const res = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)",
@@ -37,6 +40,9 @@ serve(async (req) => {
 
     const name = (titleMatch ? titleMatch[1] : new URL(url).hostname).trim()
     const description = (descMatch ? descMatch[1] : `Resource at ${url}`).trim()
+
+    const duration = Date.now() - reqStart
+    console.log(`[EdgeFunction] Generated metadata for ${url} in ${duration}ms: title="${name}"`)
 
     return new Response(
       JSON.stringify({
@@ -55,6 +61,7 @@ serve(async (req) => {
       }
     )
   } catch (err) {
+    console.error("[EdgeFunction] Error:", err)
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
