@@ -47,3 +47,6 @@ supabase/.temp
 build_*.sh
 
 
+
+# local project config (contains real project ids)
+.firebaserc

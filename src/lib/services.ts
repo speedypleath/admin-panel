@@ -1,4 +1,5 @@
-import { SERVICES } from "@/config/services"
+import type { ServiceDefinition } from "@/config/services"
+import { loadRecords } from "@/lib/panel-store"
 import type { ServiceHealth, ServiceStatus, ServicesResponse } from "@/types"
 
 const TIMEOUT_MS = 4000
@@ -19,7 +20,7 @@ function describeError(error: unknown): string {
   return "Unknown error"
 }
 
-async function checkService(service: (typeof SERVICES)[number]): Promise<ServiceStatus> {
+async function checkService(service: ServiceDefinition): Promise<ServiceStatus> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   const startedAt = performance.now()
@@ -67,6 +68,7 @@ async function checkService(service: (typeof SERVICES)[number]): Promise<Service
 }
 
 export async function checkServices(): Promise<ServicesResponse> {
-  const services = await Promise.all(SERVICES.map(checkService))
+  const defined = await loadRecords<ServiceDefinition>("services")
+  const services = await Promise.all(defined.map(checkService))
   return { services, checkedAt: Date.now() }
 }

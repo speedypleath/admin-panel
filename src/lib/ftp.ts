@@ -89,7 +89,9 @@ export async function ftpUpload(remoteDir: string, localPath: string) {
   return remotePath
 }
 
-const DEFAULT_CREDS_PATH = "<home>/.openclaw/admin-panel/ftp-credentials.json"
+const DEFAULT_CREDS_PATH =
+  process.env.FTP_CREDENTIALS_PATH ??
+  path.join(os.homedir(), ".openclaw", "admin-panel", "ftp-credentials.json")
 
 export function getDefaultFtpInfo() {
   try {

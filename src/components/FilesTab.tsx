@@ -101,7 +101,7 @@ export function FilesTab() {
   const [mode, setMode] = useState<"local" | "remote">("local")
   
   // Local state
-  const [localPath, setLocalPath] = useState("<home>")
+  const [localPath, setLocalPath] = useState("")
   const [localInput, setLocalInput] = useState(localPath)
   const [localData, setLocalData] = useState<FsListResponse | null>(null)
   const [localError, setLocalError] = useState("")
@@ -336,7 +336,7 @@ export function FilesTab() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => fetchLocalList("<home>")}
+              onClick={() => fetchLocalList("")}
               className="p-2 border border-line bg-surface rounded hover:border-line-soft transition-colors"
               title="Home"
             >

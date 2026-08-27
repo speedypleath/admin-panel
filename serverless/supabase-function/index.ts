@@ -1,5 +1,6 @@
 // Supabase Edge Function: generate-bookmark
-// Deployed to project: <supabase-project-ref> (https://<supabase-project-ref>.supabase.co/functions/v1/generate-bookmark)
+// Deployed to the Supabase project referenced by SUPABASE_URL, at
+// $SUPABASE_URL/functions/v1/generate-bookmark.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 

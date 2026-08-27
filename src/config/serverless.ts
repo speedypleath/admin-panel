@@ -1,5 +1,10 @@
-// Serverless backends shown in the control panel. Add/remove entries here to
-// extend — each entry is a hosted project (Supabase today, others later).
+/**
+ * Shape of a hosted/serverless backend card.
+ *
+ * Entries reference real cloud project ids, so they are never committed —
+ * they live in Supabase (`panel_serverless`) or in gitignored
+ * `data/serverless.json`. See `src/lib/panel-store.ts`.
+ */
 export type ServerlessProvider = "firebase" | "supabase" | "vercel" | "netlify" | "cloudflare" | "other"
 
 export interface ServerlessDefinition {
@@ -15,5 +20,3 @@ export interface ServerlessDefinition {
    *  answer (even 401/404) proves the gateway is alive, so that counts as up. */
   healthUrl?: string
 }
-
-export const SERVERLESS: ServerlessDefinition[] = []

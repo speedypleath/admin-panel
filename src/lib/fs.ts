@@ -1,5 +1,9 @@
 import fs from "fs"
+import os from "os"
 import path from "path"
+
+/** Directory the Files tab opens on. Never hardcode an operator home path. */
+export const HOME_DIR = process.env.PANEL_HOME_DIR ?? os.homedir()
 
 export async function listLocal(reqPath: string) {
   if (!reqPath || reqPath.includes("\0")) {

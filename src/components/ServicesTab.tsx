@@ -109,7 +109,7 @@ export function ServicesTab({
       <Panel className="flex flex-col items-center gap-2 px-6 py-16 text-center">
         <p className="text-fg text-sm font-medium">No services configured</p>
         <p className="text-muted max-w-sm text-[13px]">
-          Add entries to <span className="text-fg">src/config/services.ts</span> and they will show
+          Add entries to <span className="text-fg">the panel_services table (or data/services.json)</span> and they will show
           up here on the next poll.
         </p>
       </Panel>

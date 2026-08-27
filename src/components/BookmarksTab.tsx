@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import type { BookmarkDefinition } from "@/config/bookmarks"
-import { BOOKMARKS } from "@/config/bookmarks"
 import type { StoredBookmark } from "@/lib/bookmarks"
 import { Panel } from "./MetricCard"
 import { ExternalIcon, PlusIcon, TrashIcon, SparklesIcon, CrossIcon, RefreshIcon } from "./icons"
@@ -96,9 +95,7 @@ function BookmarkCard({
 }
 
 export function BookmarksTab() {
-  const [bookmarks, setBookmarks] = useState<StoredBookmark[]>(() =>
-    BOOKMARKS.map((b) => ({ ...b, isCustom: false })),
-  )
+  const [bookmarks, setBookmarks] = useState<StoredBookmark[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
 

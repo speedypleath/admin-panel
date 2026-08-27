@@ -1,4 +1,5 @@
-import { SERVERLESS } from "@/config/serverless"
+import type { ServerlessDefinition } from "@/config/serverless"
+import { loadRecords } from "@/lib/panel-store"
 import type { ServerlessResponse, ServerlessStatus, ServiceHealth } from "@/types"
 
 const TIMEOUT_MS = 6000
@@ -20,7 +21,7 @@ function describeError(error: unknown): string {
   return "Unknown error"
 }
 
-async function checkProject(project: (typeof SERVERLESS)[number]): Promise<ServerlessStatus> {
+async function checkProject(project: ServerlessDefinition): Promise<ServerlessStatus> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
   const startedAt = performance.now()
@@ -71,6 +72,7 @@ async function checkProject(project: (typeof SERVERLESS)[number]): Promise<Serve
 }
 
 export async function checkServerless(): Promise<ServerlessResponse> {
-  const projects = await Promise.all(SERVERLESS.map(checkProject))
+  const defined = await loadRecords<ServerlessDefinition>("serverless")
+  const projects = await Promise.all(defined.map(checkProject))
   return { projects, checkedAt: Date.now() }
 }

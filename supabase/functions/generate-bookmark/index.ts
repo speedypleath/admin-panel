@@ -1,6 +1,6 @@
 // Supabase Edge Function: generate-bookmark
-// Project Ref: <supabase-project-ref>
-// Endpoint: https://<supabase-project-ref>.supabase.co/functions/v1/generate-bookmark
+// Project: the one referenced by SUPABASE_URL (see .env.example)
+// Endpoint: $SUPABASE_URL/functions/v1/generate-bookmark
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 

@@ -28,5 +28,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - Deleted bookmarks (including deleted preset bookmarks) are tracked in `deleted_bookmarks` table and `data/deleted_bookmarks.json` to prevent deleted presets from reappearing.
 
 ## Serverless & Cloud Functions
-- **Supabase Edge Function**: `generate-bookmark` is deployed on Supabase project `<supabase-project-ref>` (`https://<supabase-project-ref>.supabase.co/functions/v1/generate-bookmark`).
+- **Supabase Edge Function**: `generate-bookmark` is deployed on the Supabase project referenced by `SUPABASE_URL` (see `.env.example`). The function URL is derived as `$SUPABASE_URL/functions/v1/generate-bookmark`, or overridden with `BOOKMARK_EDGE_FUNCTION_URL`. Never hardcode the project ref in source.
 - **Webhook Fallback**: The `/api/webhook/bookmark` endpoint uses the edge function for high-speed metadata generation with automatic graceful fallback to direct scraping.
+
+## Configuration & Personal Data
+
+Operator-specific data (service hostnames, tailnet names, cloud project refs,
+bookmarks, credential paths) must never be committed. It lives in:
+
+- **Supabase** — tables `panel_services`, `panel_serverless`, `panel_bookmarks`
+  (schema in `supabase/migrations/`), read at runtime via `src/lib/panel-store.ts`
+  when `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
+- **`data/*.json`** — gitignored local fallback used when Supabase is not
+  configured or unreachable, so the panel still renders offline.
+
+Files under `src/config/` define *types only*. Adding a service or bookmark
+means inserting a row, not editing source. Copy `.env.example` to `.env.local`
+and fill it in; `.env*` is gitignored.

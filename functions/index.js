@@ -1,5 +1,5 @@
 // Firebase Cloud Function (v2): generateBookmarkMeta
-// Deployed to project: <firebase-project-id> (https://console.firebase.google.com/project/<firebase-project-id>)
+// Deployed to the Firebase project configured in .firebaserc (see .firebaserc.example).
 
 const { onRequest } = require("firebase-functions/v2/https")
 const axios = require("axios")
