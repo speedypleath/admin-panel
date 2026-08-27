@@ -7,6 +7,41 @@ functions, keep bookmarks, and run a small set of maintenance commands.
 Built with Next.js 16 (App Router), React 19, Tailwind 4, and TypeScript. It
 runs in production mode on port `8096` under a macOS `launchd` agent.
 
+## Screenshots
+
+> Captured against a throwaway instance seeded with fake data — the services,
+> bookmarks, cloud projects, hostname and paths below are all placeholders.
+
+### Services
+Every self-hosted app with a live reachability probe and round-trip latency.
+
+![Services tab](docs/screenshots/services.png)
+
+### System
+CPU per core, memory, load average, network throughput, top processes and volumes.
+
+![System tab](docs/screenshots/system.png)
+
+### Files
+Browse the local filesystem or connect to a remote host over FTP.
+
+![Files tab](docs/screenshots/files.png)
+
+### Serverless
+Hosted backends across Supabase, Firebase and Cloudflare, probed the same way.
+
+![Serverless tab](docs/screenshots/serverless.png)
+
+### Bookmarks
+Saved links grouped by category, with metadata filled in automatically.
+
+![Bookmarks tab](docs/screenshots/bookmarks.png)
+
+### Actions
+Predefined maintenance commands plus an arbitrary bash escape hatch.
+
+![Actions tab](docs/screenshots/actions.png)
+
 ## Tabs
 
 - **Services** — the self-hosted apps on the box, each with a local and tailnet
