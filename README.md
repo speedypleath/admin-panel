@@ -54,7 +54,8 @@ Predefined maintenance commands plus an arbitrary bash escape hatch.
 - **Bookmarks** — saved links whose title/description/favicon are filled in
   automatically by a Supabase edge function, with direct scraping as a fallback.
 - **Actions** — one-click shell commands (restart the gateway, run backups,
-  clear caches) with stdout and stderr streamed back into the page.
+  clear caches) with stdout and stderr streamed back into the page. The command
+  list is operator config, not source — see below.
 
 ## Getting started
 
@@ -74,9 +75,9 @@ Operator-specific data — service hostnames, tailnet names, cloud project refs,
 bookmarks, credential paths — is deliberately kept out of the repository. It
 lives in one of two places:
 
-- **Supabase**, in the tables `panel_services`, `panel_serverless` and
-  `panel_bookmarks` (schema under `supabase/migrations/`). Used when both
-  `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
+- **Supabase**, in the tables `panel_services`, `panel_serverless`,
+  `panel_bookmarks` and `panel_actions` (schema under `supabase/migrations/`).
+  Used when both `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
 - **`data/*.json`**, a gitignored local fallback used when Supabase is not
   configured or is unreachable, so the panel still renders offline.
 
@@ -97,7 +98,8 @@ SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-supabase.mjs
 | `GET /api/serverless` | Deployed cloud functions |
 | `GET`/`POST`/`DELETE` `/api/bookmarks` | Bookmark CRUD |
 | `POST /api/webhook/bookmark` | Create a bookmark with generated metadata |
-| `POST /api/actions` | Execute a predefined shell command |
+| `GET /api/actions` | List the configured action buttons |
+| `POST /api/actions` | Execute a shell command (requires auth) |
 | `/api/fs/*` | Local filesystem list, upload, download |
 | `/api/ftp/*` | FTP connect, list, upload, download, disconnect |
 
@@ -112,6 +114,9 @@ launchctl kickstart -k gui/$(id -u)/com.openclaw.admin-panel
 curl -sI http://127.0.0.1:8096/
 ```
 
+With Basic auth configured that last check returns `401`, which still proves the
+server is up. Pass `-u "$PANEL_AUTH_USER:$PANEL_AUTH_PASSWORD"` for a `200`.
+
 Logs go to `logs/admin.log` and `logs/admin.err.log`.
 
 One gotcha worth knowing: `launchd` does not inherit your shell `PATH`. The
@@ -121,9 +126,21 @@ silently returns empty disk and hardware data.
 
 ## Security
 
-**`POST /api/actions` executes shell commands and has no authentication.** The
-panel assumes it is reachable only from loopback or a trusted tailnet. Do not
-expose it to the public internet, and add an auth layer before widening access.
+`POST /api/actions` executes shell commands, so the panel is protected by HTTP
+Basic auth. Set both `PANEL_AUTH_USER` and `PANEL_AUTH_PASSWORD` in `.env.local`
+and every route — pages and API alike — requires credentials.
+
+The panel has no login screen, so any token the browser holds would also be
+readable by anyone who can load the page. Basic auth is the only boundary that
+actually keeps a tailnet or LAN neighbour out of the command executor.
+
+While those two variables are unset the panel stays browsable but the executor
+**fails closed**: `POST /api/actions` returns `503` and runs nothing. Execution
+is never silently unauthenticated.
+
+The executor is additionally bounded — commands are killed after 60 seconds and
+captured output is capped at 1 MB — but it still runs arbitrary shell as the
+panel's user. Treat access to this panel as shell access to the host.
 
 `.env*`, `.firebaserc` and `data/` are gitignored and must stay that way — see
 `.env.example` and `.firebaserc.example` for the shape of each.

@@ -9,12 +9,13 @@
 import fs from "fs/promises"
 import path from "path"
 
-export type StoreKind = "services" | "serverless" | "bookmarks"
+export type StoreKind = "services" | "serverless" | "bookmarks" | "actions"
 
 const TABLES: Record<StoreKind, string> = {
   services: "panel_services",
   serverless: "panel_serverless",
   bookmarks: "panel_bookmarks",
+  actions: "panel_actions",
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL?.replace(/\/+$/, "")

@@ -42,6 +42,15 @@ bookmarks, credential paths) must never be committed. It lives in:
 - **`data/*.json`** — gitignored local fallback used when Supabase is not
   configured or unreachable, so the panel still renders offline.
 
+The Actions tab follows the same rule: preset commands reference operator
+paths and machine-local tooling, so they live in `panel_actions` /
+`data/actions.json`, never in `src/components/ActionsTab.tsx`.
+
+The panel is behind HTTP Basic auth (`PANEL_AUTH_USER` / `PANEL_AUTH_PASSWORD`
+in `.env.local`, enforced by `src/middleware.ts`). `POST /api/actions` refuses
+to execute anything while those are unset. Health checks return 401 unless you
+pass credentials — that still proves the server is up.
+
 Files under `src/config/` define *types only*. Adding a service or bookmark
 means inserting a row, not editing source. Copy `.env.example` to `.env.local`
 and fill it in; `.env*` is gitignored.

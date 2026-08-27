@@ -1,23 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { TerminalIcon, RefreshIcon } from "./icons"
 
-const PRESET_ACTIONS = [
-  { label: "List Files", command: "ls -la" },
-  { label: "Check Disk Space", command: "df -h" },
-  { label: "System Uptime", command: "uptime" },
-  { label: "Check Memory", command: "vm_stat" },
-  { label: "List Node Processes", command: "ps aux | grep node" },
-  { label: "Restart Openclaw", command: "openclaw gateway restart" },
-  { label: "Backup Openclaw", command: "openclaw backup create --output /Volumes/Kingston/Backups" },
-  { label: "Clean Caches", command: "cleanmymac clean --force" },
-  { label: "Free RAM", command: "cleanmymac optimize ram" },
-  { label: "Purge Space", command: "cleanmymac optimize purgeable" },
-]
+import type { ActionDefinition } from "@/config/actions"
 
 export function ActionsTab() {
+  const [presets, setPresets] = useState<ActionDefinition[]>([])
   const [command, setCommand] = useState("")
   const [output, setOutput] = useState<{ stdout: string; stderr: string; error?: string } | null>(null)
   const [isRunning, setIsRunning] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/actions")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows) => {
+        if (!cancelled) setPresets(Array.isArray(rows) ? rows : [])
+      })
+      .catch(() => {
+        if (!cancelled) setPresets([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const executeCommand = async (cmd: string) => {
     if (!cmd.trim()) return
@@ -57,9 +62,9 @@ export function ActionsTab() {
       <div className="bg-surface border-line rounded-xl border p-5 sm:p-6">
         <h2 className="text-fg mb-4 text-base font-semibold">Predefined Actions</h2>
         <div className="flex flex-wrap gap-3">
-          {PRESET_ACTIONS.map((action, idx) => (
+          {presets.map((action) => (
             <button
-              key={idx}
+              key={action.id}
               onClick={() => {
                 setCommand(action.command)
                 executeCommand(action.command)
@@ -71,6 +76,12 @@ export function ActionsTab() {
               {action.label}
             </button>
           ))}
+          {presets.length === 0 && (
+            <p className="text-muted text-sm">
+              No predefined actions configured. Add rows to <code>panel_actions</code> or{" "}
+              <code>data/actions.json</code>.
+            </p>
+          )}
         </div>
       </div>
 

@@ -20,6 +20,7 @@ const TABLES = {
   services: "panel_services",
   serverless: "panel_serverless",
   bookmarks: "panel_bookmarks",
+  actions: "panel_actions",
 }
 
 for (const [kind, table] of Object.entries(TABLES)) {
