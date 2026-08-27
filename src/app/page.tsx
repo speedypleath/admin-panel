@@ -8,6 +8,7 @@ import { SystemTab } from "@/components/SystemTab"
 import { FilesTab } from "@/components/FilesTab"
 import { ServerlessTab } from "@/components/ServerlessTab"
 import { BookmarksTab } from "@/components/BookmarksTab"
+import { ActionsTab } from "@/components/ActionsTab"
 import { cx, formatAgo } from "@/components/format"
 import type { ServerlessResponse, ServicesResponse, SystemSnapshot } from "@/types"
 
@@ -82,6 +83,10 @@ const PAGE_META: Record<TabId, { title: string; subtitle: string }> = {
     title: "Bookmarks",
     subtitle: "Handy links, grouped and one click away.",
   },
+  actions: {
+    title: "Actions",
+    subtitle: "Execute bash commands and pre-defined scripts.",
+  },
 }
 
 export default function Page() {
@@ -146,6 +151,8 @@ export default function Page() {
             <ServerlessTab data={serverless.data} error={serverless.error} now={now} />
           ) : tab === "bookmarks" ? (
             <BookmarksTab />
+          ) : tab === "actions" ? (
+            <ActionsTab />
           ) : (
             <FilesTab />
           )}

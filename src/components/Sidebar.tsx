@@ -1,9 +1,9 @@
 import type { ComponentType, SVGProps } from "react"
 
 import { cx, formatUptimeShort } from "./format"
-import { ServicesIcon, SystemIcon, Wordmark, FolderIcon, ServerlessIcon, BookmarkIcon } from "./icons"
+import { ServicesIcon, SystemIcon, Wordmark, FolderIcon, ServerlessIcon, BookmarkIcon, TerminalIcon } from "./icons"
 
-export type TabId = "services" | "system" | "files" | "serverless" | "bookmarks"
+export type TabId = "services" | "system" | "files" | "serverless" | "bookmarks" | "actions"
 
 const NAV: { id: TabId; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { id: "services", label: "Services", Icon: ServicesIcon },
@@ -11,6 +11,7 @@ const NAV: { id: TabId; label: string; Icon: ComponentType<SVGProps<SVGSVGElemen
   { id: "files", label: "Files", Icon: FolderIcon },
   { id: "serverless", label: "Serverless", Icon: ServerlessIcon },
   { id: "bookmarks", label: "Bookmarks", Icon: BookmarkIcon },
+  { id: "actions", label: "Actions", Icon: TerminalIcon },
 ]
 
 export function Sidebar({
