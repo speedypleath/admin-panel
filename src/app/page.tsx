@@ -9,15 +9,12 @@ import { FilesTab } from "@/components/FilesTab"
 import { ServerlessTab } from "@/components/ServerlessTab"
 import { BookmarksTab } from "@/components/BookmarksTab"
 import { ActionsTab } from "@/components/ActionsTab"
+import { LoginModal } from "@/components/LoginModal"
 import { cx, formatAgo } from "@/components/format"
 import type { ServerlessResponse, ServicesResponse, SystemSnapshot } from "@/types"
 
 type Poll<T> = { data: T | null; error: string | null; updatedAt: number | null }
 
-/**
- * Keeps the last good payload on screen when a poll fails, so a transient blip
- * shows a banner instead of blanking the panel back to skeletons.
- */
 function usePoll<T>(url: string, intervalMs: number): Poll<T> {
   const [state, setState] = useState<Poll<T>>({ data: null, error: null, updatedAt: null })
 
@@ -91,6 +88,7 @@ const PAGE_META: Record<TabId, { title: string; subtitle: string }> = {
 
 export default function Page() {
   const [tab, setTab] = useState<TabId>("services")
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const now = useNow()
 
   const system = usePoll<SystemSnapshot>("/api/system", 2500)
@@ -112,6 +110,7 @@ export default function Page() {
         hostname={system.data?.hostname ?? null}
         uptimeSeconds={system.data?.uptimeSeconds ?? null}
         osLabel={osLabel}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       <main className="min-w-0 flex-1">
@@ -158,6 +157,11 @@ export default function Page() {
           )}
         </div>
       </main>
+
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
     </div>
   )
 }

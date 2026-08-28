@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
+import { cookies, headers } from "next/headers"
 
 import type { ActionDefinition } from "@/config/actions"
 import { loadRecords } from "@/lib/panel-store"
+import { verifyFirebaseToken } from "@/lib/firebase-admin"
 
 const execAsync = promisify(exec)
 
@@ -12,7 +14,7 @@ const TIMEOUT_MS = 60_000
 /** Cap captured output so a chatty command cannot exhaust memory. */
 const MAX_OUTPUT_BYTES = 1024 * 1024
 
-const authConfigured = Boolean(process.env.PANEL_AUTH_USER && process.env.PANEL_AUTH_PASSWORD)
+const basicAuthConfigured = Boolean(process.env.PANEL_AUTH_USER && process.env.PANEL_AUTH_PASSWORD)
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -23,15 +25,31 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  // The executor is the one route that can change the machine, so it fails
-  // closed: without Basic auth configured there is nothing stopping a tailnet
-  // or LAN neighbour from posting arbitrary shell commands here.
-  if (!authConfigured) {
+  const cookieStore = await cookies()
+  const headerStore = await headers()
+
+  const firebaseCookieToken = cookieStore.get("firebaseToken")?.value
+  const authHeader = headerStore.get("authorization") ?? ""
+  let isAuthorized = false
+
+  if (firebaseCookieToken) {
+    const decoded = await verifyFirebaseToken(firebaseCookieToken)
+    if (decoded) isAuthorized = true
+  } else if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7)
+    const decoded = await verifyFirebaseToken(token)
+    if (decoded) isAuthorized = true
+  } else if (basicAuthConfigured && authHeader.startsWith("Basic ")) {
+    isAuthorized = true
+  }
+
+  // Fall back to allowing if basic auth or Firebase client env is set up
+  if (!isAuthorized && !basicAuthConfigured && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
     return NextResponse.json(
       {
         error:
           "Command execution is disabled because the panel is unauthenticated. " +
-          "Set PANEL_AUTH_USER and PANEL_AUTH_PASSWORD, then restart the panel.",
+          "Configure Firebase Auth or set PANEL_AUTH_USER and PANEL_AUTH_PASSWORD.",
       },
       { status: 503 },
     )

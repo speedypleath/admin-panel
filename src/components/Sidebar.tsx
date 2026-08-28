@@ -1,4 +1,8 @@
+"use client"
+
 import type { ComponentType, SVGProps } from "react"
+import { useAuth } from "@/components/AuthProvider"
+import { logout } from "@/lib/firebase-client"
 
 import { cx, formatUptimeShort } from "./format"
 import { ServicesIcon, SystemIcon, Wordmark, FolderIcon, ServerlessIcon, BookmarkIcon, TerminalIcon } from "./icons"
@@ -20,13 +24,17 @@ export function Sidebar({
   hostname,
   uptimeSeconds,
   osLabel,
+  onOpenLogin,
 }: {
   active: TabId
   onSelect: (tab: TabId) => void
   hostname: string | null
   uptimeSeconds: number | null
   osLabel: string | null
+  onOpenLogin: () => void
 }) {
+  const { user } = useAuth()
+
   return (
     <aside className="bg-rail border-line sticky top-0 flex h-dvh w-[68px] shrink-0 flex-col border-r lg:w-[236px]">
       <div className="flex h-16 items-center justify-center border-b border-line-soft lg:justify-start lg:px-5">
@@ -61,6 +69,41 @@ export function Sidebar({
           )
         })}
       </nav>
+
+      {/* User Auth Info / Controls */}
+      <div className="border-t border-line-soft p-2 lg:px-4 lg:py-3">
+        {user ? (
+          <div className="flex flex-col gap-2">
+            <div className="hidden lg:flex items-center gap-2 overflow-hidden">
+              {user.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoURL} alt="Avatar" className="w-7 h-7 rounded-full shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
+                  {user.displayName ? user.displayName[0].toUpperCase() : user.email ? user.email[0].toUpperCase() : "U"}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-fg truncate">{user.displayName || "Authenticated User"}</p>
+                <p className="text-[11px] text-muted truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="w-full text-xs text-muted hover:text-fg bg-surface/50 hover:bg-surface border border-line-soft rounded-lg py-1.5 px-2 transition-colors flex items-center justify-center gap-1.5"
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenLogin}
+            className="w-full text-xs font-medium text-white bg-accent/80 hover:bg-accent rounded-lg py-2 px-3 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            <span>Sign In</span>
+          </button>
+        )}
+      </div>
 
       <div className="mt-auto border-t border-line-soft px-2 py-4 lg:px-5">
         <dl className="hidden flex-col gap-2.5 lg:flex">
