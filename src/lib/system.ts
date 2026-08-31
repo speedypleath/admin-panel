@@ -168,13 +168,7 @@ async function getDisks(): Promise<DiskInfo[]> {
             fs: volume.fs || "unknown",
             sizeBytes,
             usedBytes,
-            usagePercent: clampPercent(
-              typeof volume.use === "number" && Number.isFinite(volume.use)
-                ? volume.use
-                : sizeBytes > 0
-                  ? (usedBytes / sizeBytes) * 100
-                  : 0,
-            ),
+            usagePercent: sizeBytes > 0 ? clampPercent((usedBytes / sizeBytes) * 100) : 0,
           }
         })
 
@@ -187,7 +181,7 @@ async function getDisks(): Promise<DiskInfo[]> {
         if (data && root) {
           root.usedBytes = data.usedBytes
           root.sizeBytes = data.sizeBytes
-          root.usagePercent = data.usagePercent
+          root.usagePercent = root.sizeBytes > 0 ? clampPercent((root.usedBytes / root.sizeBytes) * 100) : 0
           root.fs = data.fs
           disks = disks.filter((d) => d.mount !== "/System/Volumes/Data")
         }
