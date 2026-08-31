@@ -40,18 +40,26 @@ export async function POST(req: Request) {
     const decoded = await verifyFirebaseToken(token)
     if (decoded) isAuthorized = true
   } else if (basicAuthConfigured && authHeader.startsWith("Basic ")) {
-    isAuthorized = true
+    try {
+      const decoded = atob(authHeader.slice(6))
+      const sep = decoded.indexOf(":")
+      if (sep !== -1) {
+        const u = decoded.slice(0, sep)
+        const p = decoded.slice(sep + 1)
+        if (
+          u === process.env.PANEL_AUTH_USER &&
+          p === process.env.PANEL_AUTH_PASSWORD
+        ) {
+          isAuthorized = true
+        }
+      }
+    } catch {}
   }
 
-  // Fall back to allowing if basic auth or Firebase client env is set up
-  if (!isAuthorized && !basicAuthConfigured && !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+  if (!isAuthorized) {
     return NextResponse.json(
-      {
-        error:
-          "Command execution is disabled because the panel is unauthenticated. " +
-          "Configure Firebase Auth or set PANEL_AUTH_USER and PANEL_AUTH_PASSWORD.",
-      },
-      { status: 503 },
+      { error: "Unauthorized. Please sign in via Firebase Auth or supply valid Basic Auth credentials." },
+      { status: 401 }
     )
   }
 
